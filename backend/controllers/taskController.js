@@ -5,14 +5,6 @@ import { validationResult } from "express-validator";
 // Create task function
 export const createTask = async (req, res) => {
   try {
-    // check if user is logged in or not
-    const userId = req.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized, user not logged in" });
-    }
 
     // check for validation errors
     const errors = validationResult(req);
@@ -32,6 +24,8 @@ export const createTask = async (req, res) => {
         .json({ success: false, message: "Please enter all the details" });
     }
 
+    const userId = req.userId;
+
     // new task object
     const newTask = new Task({
       userId: userId,
@@ -48,7 +42,8 @@ export const createTask = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: "Task added successfully", newTask });
+      .json({
+        message: "Task added successfully", newTask });
   } catch (error) {
     // error handling
     console.log("Error creating task", error);
@@ -63,12 +58,6 @@ export const getTasks = async (req, res) => {
   try {
     // check if user is logged in or not
     const userId = req.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized, token invalid" });
-    }
 
     // fetch tasks from database
     const tasks = await Task.find({ userId: userId }).sort({ createdAt: -1 });
@@ -90,15 +79,6 @@ export const getTasks = async (req, res) => {
 // update task function
 export const updateTask = async (req, res) => {
   try {
-    // check if user is logged in or not
-    const userId = req.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized, token invalid" });
-    }
-
     // check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -110,6 +90,7 @@ export const updateTask = async (req, res) => {
     }
 
     // fetch update task details
+    const userId = req.userId;
     const updates = req.body;
     const taskId = req.params.id;
 
@@ -119,6 +100,7 @@ export const updateTask = async (req, res) => {
       { $set: updates },
       { new: true, runValidators: true }
     );
+    
     if (!updatedTask) {
       return res.status(404).json({
         message: "Task not found",
@@ -140,16 +122,8 @@ export const updateTask = async (req, res) => {
 // delete task function
 export const deleteTask = async (req, res) => {
   try {
-    // check if user is logged in or not
+    // fetch task details to be deleted
     const userId = req.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized, token invalid" });
-    }
-
-    // fetch task id
     const taskId = req.params.id;
 
     // fetch task to be deleted from database
@@ -157,6 +131,7 @@ export const deleteTask = async (req, res) => {
       _id: taskId,
       userId: userId,
     });
+
     if (!deleteTask) {
       return res.status(404).json({
         message: "Task not found",
@@ -179,12 +154,6 @@ export const bulkDeleteTasks = async (req, res) => {
   try {
     // check if user is logged in or not
     const userId = req.userId;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User not logged in" });
-    }
 
     // fetch array of task IDs 
     const { ids } = req.body;
